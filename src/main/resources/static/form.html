@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dados Pessoais</title>
+</head>
+
+<body>
+  <h1>Pessoas</h1>
+
+  <section>
+    <h2>Lista de Pessoas</h2>
+    <button id="btnListar">Carregar lista</button>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Username</th>
+          <th>E-mail</th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela"></tbody>
+    </table>
+  </section>
+
+  <hr />
+
+  <section>
+    <h2>Buscar pessoa pelo username</h2>
+    <button id="btnFulano">Carregar Fulano</button>
+    <button id="btnCiclano">Carregar Ciclano</button>
+    <button id="btnBeltrana">Carregar Beltrana</button>
+
+    <article>
+      <h3 id="nome">Nome</h3>
+      <p>ID: <strong id="id"></strong></p>
+      <p>Username: <strong id="username"></strong></p>
+      <p>E-mail: <strong id="email"></strong></p>
+      <p>Telefone: <strong id="telefone"></strong></p>
+      <p>Data de Nascimento: <strong id="dataNascimento"></strong></p>
+    </article>
+  </section>
+
+  <hr />
+
+  <!-- Novo Formulário de Cadastro -->
+  <section>
+    <h2>Cadastro de Pessoa</h2>
+    <form id="formCadastro">
+      <div>
+        <label for="cadNome">Nome Completo:</label><br>
+        <input type="text" id="cadNome" name="nome" required>
+      </div>
+
+      <div>
+        <label for="cadUsername">Username:</label><br>
+        <input type="text" id="cadUsername" name="username" required>
+      </div>
+
+      <div>
+        <label for="cadEmail">E-mail:</label><br>
+        <input type="email" id="cadEmail" name="email" required>
+      </div>
+
+      <div>
+        <label for="cadTelefone">Telefone:</label><br>
+        <input type="tel" id="cadTelefone" name="telefone">
+      </div>
+
+      <div>
+        <label for="cadDataNascimento">Data de Nascimento:</label><br>
+        <input type="date" id="cadDataNascimento" name="dataNascimento">
+      </div>
+
+      <div>
+        <label for="cadSenha">Senha:</label><br>
+        <input type="password" id="cadSenha" name="senha" required>
+      </div>
+
+      <div>
+        <label for="cadRepetirSenha">Repetir Senha:</label><br>
+        <input type="password" id="cadRepetirSenha" name="repetirSenha" required>
+      </div>
+
+      <fieldset style="margin-top: 10px;">
+        <legend>Conhecimentos:</legend>
+        <label><input type="checkbox" name="conhecimentos" value="Java"> Java</label><br>
+        <label><input type="checkbox" name="conhecimentos" value="Spring Boot"> Spring Boot</label><br>
+        <label><input type="checkbox" name="conhecimentos" value="JavaScript"> JavaScript</label><br>
+        <label><input type="checkbox" name="conhecimentos" value="Angular"> Angular</label><br>
+        <label><input type="checkbox" name="conhecimentos" value="React"> React</label>
+      </fieldset>
+
+      <br>
+      <button type="submit">Cadastrar Pessoa</button>
+    </form>
+  </section>
+
+  <script>
+    // Listar Pessoas
+    document.getElementById('btnListar').addEventListener('click', async () => {
+      try {
+        const httpResp = await fetch('/pessoas');
+        if (!httpResp.ok) throw new Error('Erro HTTP ' + httpResp.status);
+        
+        const pessoas = await httpResp.json();
+        const tbody = document.getElementById('corpoTabela');
+        tbody.innerHTML = '';
+
+        pessoas.forEach(p => {
+          const tr = document.createElement('tr');
+          ['id', 'nome', 'username', 'email'].forEach(campo => {
+            const td = document.createElement('td');
+            td.textContent = p[campo] ?? '';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        alert('Erro ao carregar lista: ' + err.message);
+      }
+    });
+
+    // Buscar Pessoa Única
+    async function getPessoa(username) {
+      try {
+        const httpResp = await fetch(`/pessoas/${username}`);
+        if (!httpResp.ok) throw new Error('Erro HTTP ' + httpResp.status);
+        
+        const p = await httpResp.json();
+        document.getElementById('nome').textContent = p.nome ?? '';
+        document.getElementById('id').textContent = p.id ?? '';
+        document.getElementById('username').textContent = p.username ?? '';
+        document.getElementById('email').textContent = p.email ?? '';
+        document.getElementById('telefone').textContent = p.telefone ?? '';
+        document.getElementById('dataNascimento').textContent = p.dataNascimento ?? '';
+      } catch (err) {
+        alert('Erro ao buscar pessoa: ' + err.message);
+      }
+    }
+
+    document.getElementById('btnFulano').addEventListener('click', () => getPessoa('fulano'));
+    document.getElementById('btnCiclano').addEventListener('click', () => getPessoa('ciclano'));
+    document.getElementById('btnBeltrana').addEventListener('click', () => getPessoa('beltrana'));
+
+    // Submeter Novo Cadastro
+    document.getElementById('formCadastro').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const senha = document.getElementById('cadSenha').value;
+      const repetirSenha = document.getElementById('cadRepetirSenha').value;
+
+      if (senha !== repetirSenha) {
+        alert('As senhas não coincidem!');
+        return;
+      }
+
+      const conhecimentos = Array.from(
+        document.querySelectorAll('input[name="conhecimentos"]:checked')
+      ).map(cb => cb.value);
+
+      const novaPessoa = {
+        nome: document.getElementById('cadNome').value,
+        username: document.getElementById('cadUsername').value,
+        email: document.getElementById('cadEmail').value,
+        telefone: document.getElementById('cadTelefone').value,
+        dataNascimento: document.getElementById('cadDataNascimento').value,
+        senha: senha,
+        conhecimentos: conhecimentos
+      };
+
+      try {
+        const httpResp = await fetch('/pessoas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(novaPessoa)
+        });
+
+        if (!httpResp.ok) throw new Error('Erro HTTP ' + httpResp.status);
+
+        alert('Pessoa cadastrada com sucesso!');
+        e.target.reset(); // Limpa o formulário
+      } catch (err) {
+        alert('Erro ao cadastrar pessoa: ' + err.message);
+      }
+    });
+  </script>
+</body>
+
+</html>
