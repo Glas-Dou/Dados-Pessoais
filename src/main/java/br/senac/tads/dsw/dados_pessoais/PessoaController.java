@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RequestMapping("/pessoas")
 public class PessoaController {
 
+    
     private final PessoaService pessoaService;
 
     public PessoaController(PessoaService pessoaService) {
@@ -35,6 +37,12 @@ public class PessoaController {
     @GetMapping
     public List<PessoaDto> obterPessoas() {
         return pessoaService.obterPessoas();
+    }
+
+    
+    @GetMapping("/busca")
+    public ResponseEntity<List<PessoaDto>> buscarPessoas(@RequestParam("q") String termo) {
+        return ResponseEntity.ok(pessoaService.buscarPessoas(termo));
     }
 
     @GetMapping("/{username}")
@@ -94,5 +102,4 @@ public class PessoaController {
                 HttpStatusCode.valueOf(404), ex.getMessage());
         return ResponseEntity.of(pd).build();
     }
-
 }
