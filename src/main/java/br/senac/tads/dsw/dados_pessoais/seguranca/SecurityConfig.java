@@ -1,6 +1,8 @@
 
 package br.senac.tads.dsw.dados_pessoais.seguranca;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,6 +16,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +29,8 @@ public class SecurityConfig {
             throws Exception {
 
         http
+                .cors(cors -> cors.configurationSource(
+                        corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.disable()))
@@ -31,8 +38,10 @@ public class SecurityConfig {
                         .sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST, "/login").permitAll()
+                        .requestMatchers(
+                                "/h2-console/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -57,10 +66,41 @@ public class SecurityConfig {
         return new ProviderManager(provider);
     }
 
-
     @Bean
     @SuppressWarnings("deprecation")
     public PasswordEncoder passwordEncoder() {
         return NoOpPasswordEncoder.getInstance();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration config = new CorsConfiguration();
+
+        // Origens permitidas
+        config.setAllowedOrigins(
+                List.of(
+                        "http://localhost:3000",
+                        "https://meu-frontend.com"
+                )
+        );
+
+        // Métodos HTTP permitidos
+        config.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+
+        // Headers permitidos
+        config.setAllowedHeaders(
+                List.of("Authorization", "Content-Type")
+        );
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        // Aplica a configuração a todos os caminhos
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
 }
